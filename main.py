@@ -20,8 +20,8 @@ class GUI(QtWidgets.QMainWindow):
         self.load_kd_cbr()
     
     def load_kd_cbr(self):
-        for config in self.ui.config:
-            self.kd_cbrs[config] = KdCbrBase(self.ui.config[config])
+        for config in self.ui.config['cbr']:
+            self.kd_cbrs[config] = KdCbrBase(self.ui.config['cbr'][config])
 
     def processing_data(self):
         lineEdits = self.ui.get_line_edit_select()
@@ -57,7 +57,7 @@ class GUI(QtWidgets.QMainWindow):
         if lineEdits is not None:
             data = [float(lineEdit.text()) for _, lineEdit in lineEdits]
             kq = self.predictor.predict(data)
-            kq = kq if kq in self.ui.data else "None"
+            kq = kq if kq in self.ui.config['program']['data'] else "None"
             self.ui.comboBox_label.setCurrentText(kq)
             self.ui.add_label_to_log_programs(type=0 , text=f'Result: {kq}')
 
@@ -65,22 +65,15 @@ class GUI(QtWidgets.QMainWindow):
         if self.processing_data():
             label = self.ui.comboBox_label.currentText()
             # [label]['feature_order']
-            if label in self.ui.config:
+            if label in self.ui.config['cbr']:
                 indexs = []
-                print('e', len(self.ui.config[label]['feature_order']))
-                for key in self.ui.config[label]['feature_order']:
-                    if key == "diam_circle":
-                        key = "Diam circle"
-                    elif key =="long larg":
-                        key = "Long larg"
-                    if key.title() in self.ui.values:
-                        indexs.append(self.ui.values.index(key.title()))
-                    elif key in self.ui.values:
-                        indexs.append(self.ui.values.index(key))
-                    else:
-                        print("eeeeeee", key)
                 
-                # indexs = [self.ui.values.index(key.title()) or self.ui.values.index(key) for key in self.ui.config[label]['feature_order']]
+                for key in self.ui.config['cbr'][label]['feature_order']:
+                    if key in self.ui.config['program']['key']:
+                        indexs.append(self.ui.config['program']['key'].index(key))
+                    else:
+                        QtWidgets.QMessageBox.warning(self, 'Error', 'Internal error!')
+                        return None
                 lineEdits = self.ui.get_line_edit_select()
                 data = [float(lineEdit.text()) for _, lineEdit in lineEdits]
                 values = [self.ui.format_number(data[index]) for index in indexs]
@@ -91,10 +84,8 @@ class GUI(QtWidgets.QMainWindow):
                 return None
             
     def set_calculate_form2(self, label, values):
-        print(values)
         self.ui.comboBox_label2.setCurrentText(label)
         lineEdits = self.ui.get_line_edit_form2()
-        print(lineEdits)
         for i, lineEdit in enumerate(lineEdits):
             lineEdit.setText(str(values[i]))
         self.ui.tabWidget.setCurrentIndex(1)
